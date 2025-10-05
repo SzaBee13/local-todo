@@ -10,9 +10,10 @@ clearTasksButton.addEventListener('click', () => {
   taskCount.textContent = 'No tasks available';
 });
 
-addTaskButton.addEventListener('click', () => {
-  const taskText = taskInput.value.trim();
-  if (taskText) {
+function renderTasks(tasks) {
+  tasksContainer.innerHTML = '';
+  tasks.sort((a, b) => a.localeCompare(b));
+  tasks.forEach(taskText => {
     const taskElement = document.createElement('div');
     taskElement.className = 'flex items-center justify-between p-2 bg-gray-700 border-b border-gray-600 rounded mb-2';
     taskElement.innerHTML = `
@@ -20,9 +21,18 @@ addTaskButton.addEventListener('click', () => {
       <button class="bg-red-500 text-white p-1 rounded" onclick="removeTask(this)">Remove</button>
     `;
     tasksContainer.appendChild(taskElement);
+  });
+  taskCount.textContent = tasks.length || 'No tasks available';
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+addTaskButton.addEventListener('click', () => {
+  const taskText = taskInput.value.trim();
+  if (taskText) {
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    tasks.push(taskText);
+    renderTasks(tasks);
     taskInput.value = '';
-    localStorage.setItem('tasks', tasksContainer.innerHTML);
-    taskCount.textContent = tasksContainer.children.length;
   }
 });
 
@@ -34,15 +44,18 @@ taskInput.addEventListener('keydown', (e) => {
 
 function removeTask(button) {
   const taskElement = button.parentElement;
-  tasksContainer.removeChild(taskElement);
-  localStorage.setItem('tasks', tasksContainer.innerHTML);
-  taskCount.textContent = tasksContainer.children.length;
+  const taskText = taskElement.querySelector('span').textContent;
+  let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+  tasks = tasks.filter(t => t !== taskText);
+  renderTasks(tasks);
 }
 
 window.onload = () => {
-  const savedTasks = localStorage.getItem('tasks');
-  if (savedTasks) {
-    tasksContainer.innerHTML = savedTasks;
-    taskCount.textContent = tasksContainer.children.length;
+  let tasks = [];
+  try {
+    tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+  } catch {
+    tasks = [];
   }
+  renderTasks(tasks);
 };
